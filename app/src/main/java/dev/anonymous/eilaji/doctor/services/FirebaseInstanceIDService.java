@@ -1,4 +1,4 @@
-package dev.anonymous.eilaji.doctor;
+package dev.anonymous.eilaji.doctor.services;
 
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
@@ -11,8 +11,11 @@ import com.google.firebase.messaging.RemoteMessage;
 
 import java.util.Objects;
 
+import dev.anonymous.eilaji.doctor.utils.UtilsNotifications;
+import dev.anonymous.eilaji.doctor.utils.constants.Constant;
+
 public class FirebaseInstanceIDService extends FirebaseMessagingService {
-    private static final String TAG = "FirebaseInstanceIDServi";
+    private static final String TAG = "FirebaseInstanceIDServ";
 
     @Override
     public void onNewToken(@NonNull String token) {

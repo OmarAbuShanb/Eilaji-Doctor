@@ -1,4 +1,4 @@
-package dev.anonymous.eilaji.doctor;
+package dev.anonymous.eilaji.doctor.ui.activities;
 
 import android.os.Bundle;
 

@@ -1,4 +1,4 @@
-package dev.anonymous.eilaji.doctor;
+package dev.anonymous.eilaji.doctor.adapters;
 
 import android.content.Context;
 import android.content.Intent;
@@ -11,6 +11,10 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.firebase.ui.database.FirebaseRecyclerOptions;
 
+import dev.anonymous.eilaji.doctor.models.ChatModel;
+import dev.anonymous.eilaji.doctor.ui.activities.MessagingActivity;
+import dev.anonymous.eilaji.doctor.R;
+import dev.anonymous.eilaji.doctor.utils.Utils;
 import dev.anonymous.eilaji.doctor.databinding.ItemChatBinding;
 
 public class ChatsAdapter extends FirebaseRecyclerAdapter<ChatModel, ChatsAdapter.ChatsViewHolder> {

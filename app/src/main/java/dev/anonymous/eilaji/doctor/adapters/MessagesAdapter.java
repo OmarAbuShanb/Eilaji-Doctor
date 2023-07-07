@@ -1,4 +1,4 @@
-package dev.anonymous.eilaji.doctor;
+package dev.anonymous.eilaji.doctor.adapters;
 
 import android.content.Context;
 import android.graphics.Color;
@@ -31,6 +31,10 @@ import com.google.android.material.progressindicator.CircularProgressIndicator;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import dev.anonymous.eilaji.doctor.models.MessageModel;
+import dev.anonymous.eilaji.doctor.R;
+import dev.anonymous.eilaji.doctor.utils.Utils;
 
 public class MessagesAdapter extends FirebaseRecyclerAdapter<MessageModel, RecyclerView.ViewHolder> {
     public static final int

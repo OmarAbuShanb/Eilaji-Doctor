@@ -1,4 +1,4 @@
-package dev.anonymous.eilaji.doctor;
+package dev.anonymous.eilaji.doctor.ui.activities;
 
 import android.os.Bundle;
 import android.view.MenuItem;
@@ -12,10 +12,12 @@ import com.google.firebase.auth.FirebaseUser;
 
 import java.util.Objects;
 
+import dev.anonymous.eilaji.doctor.R;
+import dev.anonymous.eilaji.doctor.utils.Utils;
 import dev.anonymous.eilaji.doctor.databinding.ActivityBaseBinding;
 
 public class BaseActivity extends AppCompatActivity {
-    ActivityBaseBinding binding;
+    private ActivityBaseBinding binding;
     public ActionBarDrawerToggle actionBarDrawerToggle;
 
     @Override

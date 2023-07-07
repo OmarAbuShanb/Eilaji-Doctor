@@ -1,8 +1,9 @@
-package dev.anonymous.eilaji.doctor
+package dev.anonymous.eilaji.doctor.utils
 
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.AdapterDataObserver
+import dev.anonymous.eilaji.doctor.adapters.MessagesAdapter
 
 class MyScrollToBottomObserver(
     private val recycler: RecyclerView,

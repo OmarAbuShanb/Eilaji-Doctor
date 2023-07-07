@@ -1,4 +1,4 @@
-package dev.anonymous.eilaji.doctor;
+package dev.anonymous.eilaji.doctor.ui.activities;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -26,7 +26,12 @@ import com.google.firebase.storage.StorageReference;
 import java.util.HashMap;
 import java.util.Map;
 
+import dev.anonymous.eilaji.doctor.models.ChatModel;
+import dev.anonymous.eilaji.doctor.utils.constants.Constant;
+import dev.anonymous.eilaji.doctor.models.MessageModel;
+import dev.anonymous.eilaji.doctor.utils.MyScrollToBottomObserver;
 import dev.anonymous.eilaji.doctor.Notification.FCMSend;
+import dev.anonymous.eilaji.doctor.adapters.MessagesAdapter;
 import dev.anonymous.eilaji.doctor.databinding.ActivityMessagingBinding;
 
 public class MessagingActivity extends AppCompatActivity {

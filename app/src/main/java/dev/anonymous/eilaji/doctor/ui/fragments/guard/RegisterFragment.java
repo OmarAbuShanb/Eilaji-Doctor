@@ -1,4 +1,4 @@
-package dev.anonymous.eilaji.doctor;
+package dev.anonymous.eilaji.doctor.ui.fragments.guard;
 
 import static android.content.Context.MODE_PRIVATE;
 
@@ -31,7 +31,10 @@ import com.google.firebase.storage.StorageReference;
 import java.util.HashMap;
 import java.util.Objects;
 
+import dev.anonymous.eilaji.doctor.utils.constants.Constant;
+import dev.anonymous.eilaji.doctor.utils.Utils;
 import dev.anonymous.eilaji.doctor.databinding.FragmentRegisterBinding;
+import dev.anonymous.eilaji.doctor.ui.activities.BaseActivity;
 
 public class RegisterFragment extends Fragment {
     private static final String TAG = "RegisterFragment";

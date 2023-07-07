@@ -1,4 +1,4 @@
-package dev.anonymous.eilaji.doctor;
+package dev.anonymous.eilaji.doctor.temp.models;
 
 public class MessageModel {
     private String senderUid;

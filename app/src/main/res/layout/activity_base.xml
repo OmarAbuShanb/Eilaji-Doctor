@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
-    tools:context=".BaseActivity"
+    tools:context=".ui.activities.BaseActivity"
     tools:openDrawer="start">
     <!--    tools:openDrawer="start"-->
 
@@ -23,7 +23,7 @@
 
         <androidx.fragment.app.FragmentContainerView
             android:id="@+id/fragmentContainerView2"
-            android:name="dev.anonymous.eilaji.doctor.ChatsFragment"
+            android:name="dev.anonymous.eilaji.doctor.ui.fragments.chatting.ChatsFragment"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             app:layout_constraintBottom_toBottomOf="parent"

@@ -1,4 +1,4 @@
-package dev.anonymous.eilaji.doctor;
+package dev.anonymous.eilaji.doctor.utils;
 
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -21,6 +21,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
+
+import dev.anonymous.eilaji.doctor.R;
 
 public class UtilsNotifications {
     private static final String TAG = "UtilsNotifications";

@@ -1,4 +1,4 @@
-package dev.anonymous.eilaji.doctor;
+package dev.anonymous.eilaji.doctor.ui.viewModels;
 
 import androidx.lifecycle.ViewModel;
 

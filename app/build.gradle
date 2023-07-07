@@ -83,4 +83,8 @@ dependencies {
     // FirebaseUI for Firebase Realtime Database => FirebaseRecyclerAdapter
     implementation 'com.firebaseui:firebase-ui-database:8.0.2'
 
+    // Navigation Component
+    implementation 'androidx.navigation:navigation-fragment-ktx:2.6.0'
+    implementation 'androidx.navigation:navigation-ui-ktx:2.6.0'
+
 }

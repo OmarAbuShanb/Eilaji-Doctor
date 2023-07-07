@@ -1,4 +1,4 @@
-package dev.anonymous.eilaji.doctor;
+package dev.anonymous.eilaji.doctor.utils.constants;
 
 public class Constant {
     public static String CHAT_LIST_DOCUMENT = "Chat_List";

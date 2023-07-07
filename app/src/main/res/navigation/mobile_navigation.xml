@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mobile_navigation"
+    app:startDestination="@id/navigation_chats">
+
+    <fragment
+        android:id="@+id/navigation_chats"
+        android:name="dev.anonymous.eilaji.doctor.ui.fragments.chatting.ChatsFragment"
+        android:label="fragment_chats"
+        tools:layout="@layout/fragment_chats" >
+        <action
+            android:id="@+id/action_navigation_chats_to_navigation_messaging_activity"
+            app:destination="@id/navigation_messaging_activity" />
+    </fragment>
+
+    <activity
+        android:id="@+id/navigation_messaging_activity"
+        android:name="dev.anonymous.eilaji.doctor.ui.activities.MessagingActivity"
+        android:label="activity_messaging"
+        tools:layout="@layout/activity_messaging" />
+    <activity
+        android:id="@+id/navigation_baseActivity"
+        android:name="dev.anonymous.eilaji.doctor.ui.activities.BaseActivity"
+        android:label="activity_base"
+        tools:layout="@layout/activity_base" />
+
+    <fragment
+    android:id="@+id/navigation_editInformation"
+    android:name="dev.anonymous.eilaji.doctor.ui.fragments.EditInformationFragment"
+    android:label="fragment_edit_information"
+    tools:layout="@layout/fragment_edit_information" />
+</navigation>

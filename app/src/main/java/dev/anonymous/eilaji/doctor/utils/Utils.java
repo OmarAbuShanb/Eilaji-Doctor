@@ -1,4 +1,4 @@
-package dev.anonymous.eilaji.doctor;
+package dev.anonymous.eilaji.doctor.utils;
 
 import static android.content.Context.MODE_PRIVATE;
 
@@ -18,21 +18,21 @@ import com.google.firebase.messaging.FirebaseMessaging;
 import java.text.SimpleDateFormat;
 import java.util.Locale;
 
+import dev.anonymous.eilaji.doctor.R;
+
 public class Utils {
     private static final String TAG = "Utils";
-//    private static Utils instance;
-//
-//    private Utils() {
-//
-//    }
-//
-//    public static Utils getInstance() {
-//        if (instance == null) {
-//            instance = new Utils();
-//        }
-//        return instance;
-//
-//    }
+    private static Utils instance;
+
+    private Utils() {
+    }
+
+    public static Utils getInstance() {
+        if (instance == null) {
+            instance = new Utils();
+        }
+        return instance;
+    }
 
     public interface GetTokenListener {
         void onGetTokenSuccessfully(String token);
@@ -85,5 +85,9 @@ public class Utils {
                 .placeholder(R.color.place_holder_color)
                 .diskCacheStrategy(DiskCacheStrategy.ALL)
                 .centerCrop();
+    }
+
+    public void print(String s){
+        System.out.println(s);
     }
 }
