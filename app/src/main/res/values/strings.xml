@@ -1,0 +1,30 @@
+<resources>
+    <string name="app_name">Eilaji Doctor</string>
+
+    <string name="nav_open">Open</string>
+    <string name="nav_close">Close</string>
+
+    <string name="full_name">Full Name</string>
+    <string name="password">Password</string>
+    <string name="email">Email</string>
+    <string name="login">Login</string>
+    <string name="remember_me">Remember me</string>
+    <string name="do_not_have_an_account">Don\'t have an account?</string>
+    <string name="create_a_new_account">Create a new account</string>
+    <string name="forgot_your_password">Forgot your password?</string>
+    <string name="confirm_password">Confirm password</string>
+    <string name="create_an_account">Create an account</string>
+    <string name="have_an_account">Have an account?</string>
+    <string name="sign_in">Sign in</string>
+    <string name="address">Address</string>
+    <string name="pharmacy_name">Pharmacy name</string>
+    <string name="doctor_full_name">Doctor full name</string>
+    <string name="choose_image">Choose image..</string>
+    <string name="send">Send</string>
+    <string name="phone">Phone</string>
+    <string name="get_location">Get location</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="save_edits">Save Edits</string>
+
+</resources>
