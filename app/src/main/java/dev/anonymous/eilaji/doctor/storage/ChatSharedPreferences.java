@@ -8,7 +8,7 @@ import dev.anonymous.eilaji.doctor.utils.AppController;
 
 public class ChatSharedPreferences {
     private enum SharedPreferencesChatKeys {
-        userToken,currentUserChattingUid,
+        userToken,currentUserChattingUid,address
     }
     private static ChatSharedPreferences Instance;
     private final SharedPreferences sharedPreferences;
@@ -53,6 +53,22 @@ public class ChatSharedPreferences {
     public void removeCurrentUserChattingUID() {
         editor = sharedPreferences.edit();
         editor.remove(SharedPreferencesChatKeys.currentUserChattingUid.name());
+        editor.apply();
+    }
+    //------------------------------------
+
+    // -------------------------------------------
+    public String getAddress() {
+        return sharedPreferences.getString(SharedPreferencesChatKeys.address.name(), "");
+    }
+    public void putAddress(String address) {
+        editor = sharedPreferences.edit();
+        editor.putString(SharedPreferencesChatKeys.address.name(), address);
+        editor.apply();
+    }
+    public void removeAddress() {
+        editor = sharedPreferences.edit();
+        editor.remove(SharedPreferencesChatKeys.address.name());
         editor.apply();
     }
     //------------------------------------
