@@ -26,5 +26,8 @@
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="save_edits">Save Edits</string>
+    <string name="chats">Chats</string>
+    <string name="edit_information">Edit informations</string>
+    <string name="logout">Logout</string>
 
 </resources>

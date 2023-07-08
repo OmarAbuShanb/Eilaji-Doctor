@@ -20,6 +20,7 @@
         android:name="dev.anonymous.eilaji.doctor.ui.activities.MessagingActivity"
         android:label="activity_messaging"
         tools:layout="@layout/activity_messaging" />
+
     <activity
         android:id="@+id/navigation_baseActivity"
         android:name="dev.anonymous.eilaji.doctor.ui.activities.BaseActivity"

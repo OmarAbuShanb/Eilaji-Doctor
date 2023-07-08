@@ -15,6 +15,7 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
+import dev.anonymous.eilaji.doctor.firebase.FirebaseChatController;
 import dev.anonymous.eilaji.doctor.firebase.FirebaseController;
 import dev.anonymous.eilaji.doctor.models.ChatModel;
 import dev.anonymous.eilaji.doctor.utils.constants.Constant;
@@ -65,21 +66,25 @@ public class ChatsFragment extends Fragment {
     private void executeChatDisplay() {
         if (firebaseUser != null) {
             userUid = firebaseUser.getUid();
-            chatListRef = firebaseDatabase
-                    .getReference(Constant.CHAT_LIST_DOCUMENT);
+//            chatListRef = firebaseDatabase
+//                    .getReference(Constant.CHAT_LIST_DOCUMENT);
 
             setupChatsAdapter();
         }
     }
     private void setupChatsAdapter() {
-        DatabaseReference currentChatRef = chatListRef.child(userUid);
+        var chatController = FirebaseChatController.getInstance();
+
+        DatabaseReference currentChatRef = chatController.database.getReference(Constant.CHAT_LIST_DOCUMENT)
+                .child(userUid);
         FirebaseRecyclerOptions<ChatModel> options = new FirebaseRecyclerOptions.Builder<ChatModel>()
                 .setQuery(currentChatRef, ChatModel.class)
                 .build();
 
+        var chats_recycler = binding.recyclerChats;
         chatsAdapter = new ChatsAdapter(options, userUid);
-        binding.recyclerChats.setLayoutManager(new LinearLayoutManager(getActivity()));
-        binding.recyclerChats.setAdapter(chatsAdapter);
+        chats_recycler.setLayoutManager(new LinearLayoutManager(getActivity()));
+        chats_recycler.setAdapter(chatsAdapter);
 
         chatsAdapter.startListening();
     }

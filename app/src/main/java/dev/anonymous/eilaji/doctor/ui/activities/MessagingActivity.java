@@ -1,7 +1,6 @@
 package dev.anonymous.eilaji.doctor.ui.activities;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -16,38 +15,32 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.firebase.ui.database.FirebaseRecyclerOptions;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import dev.anonymous.eilaji.doctor.models.ChatModel;
-import dev.anonymous.eilaji.doctor.utils.constants.Constant;
-import dev.anonymous.eilaji.doctor.models.MessageModel;
-import dev.anonymous.eilaji.doctor.utils.MyScrollToBottomObserver;
 import dev.anonymous.eilaji.doctor.Notification.FCMSend;
 import dev.anonymous.eilaji.doctor.adapters.MessagesAdapter;
 import dev.anonymous.eilaji.doctor.databinding.ActivityMessagingBinding;
+import dev.anonymous.eilaji.doctor.firebase.FirebaseChatController;
+import dev.anonymous.eilaji.doctor.models.ChatModel;
+import dev.anonymous.eilaji.doctor.models.MessageModel;
+import dev.anonymous.eilaji.doctor.storage.ChatSharedPreferences;
+import dev.anonymous.eilaji.doctor.utils.MyScrollToBottomObserver;
+import dev.anonymous.eilaji.doctor.utils.constants.Constant;
+import dev.anonymous.eilaji.doctor.utils.interfaces.ListenerCallback;
 
 public class MessagingActivity extends AppCompatActivity {
     private static final String TAG = "MessagingActivity";
     private ActivityMessagingBinding binding;
-
-    private SharedPreferences preferences;
-
     private StorageReference messagesImagesRef;
     private DatabaseReference chatListRef;
     private DatabaseReference chatRef;
-
     private MessagesAdapter messagesAdapter;
-
     private String chatId;
-
     private String userUid,
             userFullName,
             userUrlImage,
@@ -58,21 +51,25 @@ public class MessagingActivity extends AppCompatActivity {
             receiverUrlImage,
             receiverToken;
 
+    private final ChatSharedPreferences chatSharedPreferences = ChatSharedPreferences.getInstance();
+    private final FirebaseChatController firebaseChatController = FirebaseChatController.getInstance();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         binding = ActivityMessagingBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        preferences = getSharedPreferences("user_info", MODE_PRIVATE);
 
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        var user = firebaseChatController.getCurrentUser();
         if (user != null) {
             userUid = user.getUid();
 
             userFullName = user.getDisplayName();
             userUrlImage = String.valueOf(user.getPhotoUrl());
-            userToken = preferences.getString("token", null);
+            //TODO
+            userToken = chatSharedPreferences.getToken();
+//            userToken = preferences.getString("token", null);
 
             Intent intent = getIntent();
             if (intent != null) {
@@ -91,36 +88,45 @@ public class MessagingActivity extends AppCompatActivity {
             chatListRef = database.getReference(Constant.CHAT_LIST_DOCUMENT);
             chatRef = database.getReference(Constant.CHATS_DOCUMENT);
 
-            messagesImagesRef = FirebaseStorage.getInstance()
-                    .getReference(Constant.MESSAGES_IMAGES_DOCUMENT);
+//            messagesImagesRef = FirebaseStorage.getInstance()
+//                    .getReference(Constant.MESSAGES_IMAGES_DOCUMENT);
 
             checkChatExist(userUid, receiverUid);
 
             binding.buSendMessage.setOnClickListener(v -> {
-                // if not check in firebase
-                if (chatId != null) {
-                    String message = binding.edMessage.getText().toString().trim();
-
-                    if (!TextUtils.isEmpty(message)) {
-                        binding.edMessage.setText("");
-                        sendMessage(userUid, receiverUid, message, null);
-                    }
-                }
+                buttonSendMessage();
             });
 
             binding.buSendImage.setOnClickListener(v -> {
-                PickVisualMediaRequest mediaRequest = new PickVisualMediaRequest.Builder()
-                        .setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE)
-                        .build();
-                pickMedia.launch(mediaRequest);
+                buttonSendImage();
             });
         }
     }
 
+    private void buttonSendImage() {
+        PickVisualMediaRequest mediaRequest = new PickVisualMediaRequest.Builder()
+                .setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE)
+                .build();
+        pickMedia.launch(mediaRequest);
+    }
+
+    private void buttonSendMessage() {
+        if (chatId != null) {
+            String message = binding.edMessage.getText().toString().trim();
+
+            if (!TextUtils.isEmpty(message)) {
+                binding.edMessage.setText("");
+                sendMessage(userUid, receiverUid, message, null);
+            }
+        }
+    }
+
+    //
     @Override
     protected void onResume() {
         if (receiverUid != null) {
-            preferences.edit().putString(Constant.CURRENT_USER_CHATTING_UID, receiverUid).apply();
+            chatSharedPreferences.putCurrentUserChattingUID(receiverUid);
+//            preferences.edit().putString(Constant.CURRENT_USER_CHATTING_UID, receiverUid).apply();
         }
         super.onResume();
     }
@@ -128,7 +134,8 @@ public class MessagingActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         if (receiverUid != null) {
-            preferences.edit().remove(Constant.CURRENT_USER_CHATTING_UID).apply();
+            chatSharedPreferences.removeCurrentUserChattingUID();
+//            preferences.edit().remove(Constant.CURRENT_USER_CHATTING_UID).apply();
         }
         super.onPause();
     }
@@ -164,7 +171,9 @@ public class MessagingActivity extends AppCompatActivity {
                                 Toast.makeText(this, "تم انشاء قالب المحادثة", Toast.LENGTH_SHORT).show();
                                 chatId = id;
                                 if (imageUri != null) {
+
                                     uploadImageMassage(senderUid, receiverUid, imageUri);
+
                                 } else {
                                     addMessageToChat(
                                             senderUid,
@@ -312,7 +321,11 @@ public class MessagingActivity extends AppCompatActivity {
     }
 
     private void setupMessagesAdapter() {
-        DatabaseReference currentChatRef = chatRef.child(chatId).child(Constant.CHATS_CHILD_CHAT);
+        var chatController = FirebaseChatController.getInstance();
+        DatabaseReference currentChatRef = chatController.database
+                .getReference(Constant.CHATS_DOCUMENT)
+                .child(Constant.CHATS_CHILD_CHAT);
+
         FirebaseRecyclerOptions<MessageModel> options = new FirebaseRecyclerOptions.Builder<MessageModel>()
                 .setQuery(currentChatRef, MessageModel.class)
                 .build();
@@ -335,4 +348,23 @@ public class MessagingActivity extends AppCompatActivity {
 
         messagesAdapter.startListening();
     }
+
+
+    ///******************************************
+
+    private void uploadImageM(Uri imageUri) {
+        firebaseChatController.uploadImageMassage(userUid, receiverUid, imageUri, new ListenerCallback() {
+            @Override
+            public void onSuccess() {
+
+            }
+
+            @Override
+            public void onFailure(String message) {
+
+            }
+        });
+    }
+
+
 }

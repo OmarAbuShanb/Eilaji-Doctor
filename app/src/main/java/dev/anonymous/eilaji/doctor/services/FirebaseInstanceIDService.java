@@ -9,35 +9,33 @@ import androidx.annotation.NonNull;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 
-import java.util.Objects;
-
+import dev.anonymous.eilaji.doctor.storage.ChatSharedPreferences;
 import dev.anonymous.eilaji.doctor.utils.UtilsNotifications;
 import dev.anonymous.eilaji.doctor.utils.constants.Constant;
 
 public class FirebaseInstanceIDService extends FirebaseMessagingService {
+    private final ChatSharedPreferences chatSharedPreferences = ChatSharedPreferences.getInstance();
     private static final String TAG = "FirebaseInstanceIDServ";
 
     @Override
     public void onNewToken(@NonNull String token) {
         super.onNewToken(token);
-
-        Log.e(TAG, "onNewToken: " + token);
-        SharedPreferences preferences = getSharedPreferences("user_info", MODE_PRIVATE);
-        preferences.edit().putString("token", token).apply();
+        chatSharedPreferences.putToken(token);
     }
 
     @Override
     public void onMessageReceived(RemoteMessage remoteMessage) {
-        SharedPreferences preferences = getSharedPreferences("user_info", MODE_PRIVATE);
-        String currentUserChattingUid = preferences.getString(Constant.CURRENT_USER_CHATTING_UID, "");
+
+
+        String currentUserChattingUID = chatSharedPreferences.getCurrentUserChattingUID();
 
         String userUid = remoteMessage.getData().get("user_uid");
-        if (!currentUserChattingUid.equals(userUid)) {
+        if (!currentUserChattingUID.equals(userUid)) {
             // remoteMessage.getMessageId() 0:1688335009891464%43383ed843383ed8
             // remoteMessage.getSentTime() 1688335009875
 
             // 837284011159
-            int senderId = Integer.parseInt(Objects.requireNonNull(remoteMessage.getSenderId()));
+            int senderId = Integer.parseInt("12345");
             String fullName = remoteMessage.getData().get("full_name");
             String message = remoteMessage.getData().get("message");
             String imageUrl = remoteMessage.getData().get("image_url");

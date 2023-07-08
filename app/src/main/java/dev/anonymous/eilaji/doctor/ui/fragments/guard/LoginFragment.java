@@ -5,6 +5,7 @@ import static android.content.Context.MODE_PRIVATE;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,69 +15,83 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.NavController;
+import androidx.navigation.fragment.NavHostFragment;
 
-import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.Map;
 import java.util.Objects;
 
-import dev.anonymous.eilaji.doctor.utils.constants.Constant;
+import dev.anonymous.eilaji.doctor.R;
 import dev.anonymous.eilaji.doctor.databinding.FragmentLoginBinding;
+import dev.anonymous.eilaji.doctor.firebase.FirebaseController;
 import dev.anonymous.eilaji.doctor.ui.activities.BaseActivity;
+import dev.anonymous.eilaji.doctor.utils.Utils;
+import dev.anonymous.eilaji.doctor.utils.constants.Constant;
 
 public class LoginFragment extends Fragment {
     private static final String TAG = "LoginFragment";
-
-    FragmentLoginBinding binding;
-    //    private LoginViewModel mViewModel;
-    private FirebaseAuth auth;
+    private FragmentLoginBinding binding;
     private CollectionReference pharmaciesCollection;
     private SharedPreferences preferences;
+    // hesham changes
+    private final FirebaseController firebaseController = FirebaseController.getInstance();
+
+    private NavController navController;
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        // initialing the collection
+        pharmaciesCollection = FirebaseFirestore.getInstance().collection(Constant.PHARMACIES_COLLECTION);
+        // here initialing the preferences
+        preferences = requireActivity().getSharedPreferences("user_info", MODE_PRIVATE);
+        // navController
+        navController = NavHostFragment.findNavController(this);
+    }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
-        binding = FragmentLoginBinding.inflate(inflater, container, false);
-
-        Intent intent = new Intent(getActivity(), BaseActivity.class);
-        startActivity(intent);
-        requireActivity().finish();
-
-        auth = FirebaseAuth.getInstance();
-        pharmaciesCollection = FirebaseFirestore.getInstance()
-                .collection(Constant.PHARMACIES_COLLECTION);
-        preferences = requireActivity().getSharedPreferences("user_info", MODE_PRIVATE);
-
-        binding.buLogin.setOnClickListener(v -> {
-            String email = Objects.requireNonNull(binding.edEmail.getText()).toString().trim();
-            String password = Objects.requireNonNull(binding.edPassword.getText()).toString().trim();
-            signIn(email, password);
-        });
+        binding = FragmentLoginBinding.inflate(getLayoutInflater());
 
         return binding.getRoot();
     }
 
-    private void signIn(String email, String password) {
-        auth.signInWithEmailAndPassword(email, password)
-                .addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
-                        Toast.makeText(getActivity(), "Authentication isSuccessful!", Toast.LENGTH_SHORT).show();
-                        String userUid = Objects.requireNonNull(task.getResult().getUser()).getUid();
-                        getAddress(userUid);
-
-                        Intent intent = new Intent(getActivity(), BaseActivity.class);
-                        startActivity(intent);
-                        requireActivity().finish();
-
-                    } else {
-                        Toast.makeText(getActivity(), "Authentication failed!", Toast.LENGTH_SHORT).show();
-                    }
-                });
+    private void moveToBaseActivity() {
+        Intent intent = new Intent(getActivity(), BaseActivity.class);
+        startActivity(intent);
+        requireActivity().finish();
     }
 
-    void getAddress(String userUid) {
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        // get the listeners ready
+        setupListeners();
+    }
+
+
+    // helper methods
+    private void setupListeners() {
+
+        // the login button
+        binding.buLogin.setOnClickListener(v -> {
+            String email = Objects.requireNonNull(binding.edEmail.getText()).toString().trim();
+            String password = Objects.requireNonNull(binding.edPassword.getText()).toString().trim();
+            if (!TextUtils.isEmpty(password) && !TextUtils.isEmpty(password)) {
+                signIn(email, password);
+            } else {
+                Utils.getInstance().showSnackBar(binding.getRoot(), "Check Empty Fields!");
+            }
+        });
+
+        binding.buSignUp.setOnClickListener(view -> navController.navigate(R.id.navigation_register));
+    }
+
+    private void getAddress(String userUid) {
         pharmaciesCollection.document(userUid)
                 .get()
                 .addOnCompleteListener(task -> {
@@ -95,4 +110,25 @@ public class LoginFragment extends Fragment {
                 }).addOnFailureListener(e ->
                         Log.e(TAG, "getAddress:addOnFailureListener: " + e.getMessage()));
     }
+
+    // MainMethods
+    private void signIn(String email, String password) {
+        firebaseController.getAuth().signInWithEmailAndPassword(email, password)
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        Toast.makeText(getActivity(), "Authentication isSuccessful!", Toast.LENGTH_SHORT).show();
+                        String userUid = Objects.requireNonNull(task.getResult().getUser()).getUid();
+
+                        // get the user address and store it
+                        getAddress(userUid);
+
+                        // Done SignIn (Login)
+                        moveToBaseActivity();
+
+                    } else {
+                        Toast.makeText(getActivity(), "Authentication failed!", Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
+
 }

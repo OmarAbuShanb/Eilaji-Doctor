@@ -10,29 +10,35 @@
     tools:openDrawer="start">
     <!--    tools:openDrawer="start"-->
 
+    <!--Background Layout-->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
+        <!--ActionBar-->
         <include
             android:id="@+id/includeAppBarLayoutBase"
             layout="@layout/app_bar_layout"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
-
-        <androidx.fragment.app.FragmentContainerView
-            android:id="@+id/fragmentContainerView2"
-            android:name="dev.anonymous.eilaji.doctor.ui.fragments.chatting.ChatsFragment"
+        <!--Fragment of the baseActivity-->
+        <fragment
+            android:id="@+id/nav_host_fragment_activity_base"
+            android:name="androidx.navigation.fragment.NavHostFragment"
             android:layout_width="match_parent"
             android:layout_height="0dp"
+            app:defaultNavHost="true"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/includeAppBarLayoutBase" />
+            app:layout_constraintTop_toBottomOf="@+id/includeAppBarLayoutBase"
+            app:navGraph="@navigation/mobile_navigation"
+            tools:ignore="FragmentTagUsage" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
+    <!--DrawerLayout-->
     <com.google.android.material.navigation.NavigationView
         android:id="@+id/navView"
         android:layout_width="wrap_content"
@@ -43,11 +49,12 @@
         <ScrollView
             android:layout_width="match_parent"
             android:layout_height="match_parent">
-
+            <!--Layout of buttons-->
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
+                <!--Image of the Pharmacy-->
                 <ImageView
                     android:id="@+id/ivPharmacyNav"
                     android:layout_width="match_parent"
@@ -59,8 +66,9 @@
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
 
+                <!--First Button-->
                 <LinearLayout
-                    android:id="@+id/buRateApp"
+                    android:id="@+id/buChats"
                     style="@style/SelectableItemBackgroundStyle"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
@@ -71,6 +79,7 @@
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@+id/ivPharmacyNav">
 
+                    <!--Icon for the first button-->
                     <ImageView
                         android:layout_width="@dimen/_20sdp"
                         android:layout_height="@dimen/_20sdp"
@@ -78,16 +87,16 @@
                         android:scaleType="fitXY"
                         android:src="@drawable/ic_message"
                         tools:ignore="ImageContrastCheck" />
-
+                    <!--Text for the first button-->
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="@dimen/_8sdp"
-                        android:text="chats"
+                        android:text="@string/chats"
                         android:textSize="@dimen/_13ssp" />
 
                 </LinearLayout>
-
+                <!--Divider_1-->
                 <View
                     android:id="@+id/view2"
                     android:layout_width="match_parent"
@@ -96,10 +105,10 @@
                     android:background="@color/gray"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/buRateApp" />
-
+                    app:layout_constraintTop_toBottomOf="@+id/buChats" />
+                <!--Second Button-->
                 <LinearLayout
-                    android:id="@+id/buRateApp2"
+                    android:id="@+id/buEditUserInfo"
                     style="@style/SelectableItemBackgroundStyle"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
@@ -108,7 +117,7 @@
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@+id/view2">
-
+                    <!--Icon-->
                     <ImageView
                         android:layout_width="@dimen/_20sdp"
                         android:layout_height="@dimen/_20sdp"
@@ -116,16 +125,16 @@
                         android:scaleType="fitXY"
                         android:src="@drawable/ic_description"
                         tools:ignore="ImageContrastCheck" />
-
+                    <!--Text-->
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="@dimen/_8sdp"
-                        android:text="edit information"
+                        android:text="@string/edit_information"
                         android:textSize="@dimen/_13ssp" />
 
                 </LinearLayout>
-
+                <!--Divider_2-->
                 <View
                     android:id="@+id/view"
                     android:layout_width="match_parent"
@@ -134,8 +143,8 @@
                     android:background="@color/gray"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/buRateApp2" />
-
+                    app:layout_constraintTop_toBottomOf="@+id/buEditUserInfo" />
+                <!--ThirdButton-->
                 <LinearLayout
                     android:id="@+id/buLogout"
                     style="@style/SelectableItemBackgroundStyle"
@@ -147,7 +156,7 @@
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@+id/view">
-
+                    <!--Icon-->
                     <ImageView
                         android:layout_width="@dimen/_20sdp"
                         android:layout_height="@dimen/_20sdp"
@@ -155,12 +164,12 @@
                         android:scaleType="fitXY"
                         android:src="@drawable/ic_logout"
                         tools:ignore="ImageContrastCheck" />
-
+                    <!--Text-->
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="@dimen/_8sdp"
-                        android:text="logout"
+                        android:text="@string/logout"
                         android:textSize="@dimen/_13ssp" />
 
                 </LinearLayout>
