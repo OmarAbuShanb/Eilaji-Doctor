@@ -1,0 +1,393 @@
+package dev.anonymous.eilaji.doctor.temp.omar_old_code;
+
+import android.content.Intent;
+import android.net.Uri;
+import android.os.Bundle;
+import android.text.TextUtils;
+import android.util.Log;
+import android.view.View;
+import android.widget.Toast;
+
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.PickVisualMediaRequest;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+
+import com.firebase.ui.database.FirebaseRecyclerOptions;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import dev.anonymous.eilaji.doctor.Notification.FCMSend;
+import dev.anonymous.eilaji.doctor.adapters.MessagesAdapter;
+import dev.anonymous.eilaji.doctor.databinding.ActivityMessagingBinding;
+import dev.anonymous.eilaji.doctor.firebase.FirebaseChatController;
+import dev.anonymous.eilaji.doctor.storage.ChatSharedPreferences;
+import dev.anonymous.eilaji.doctor.utils.MyScrollToBottomObserver;
+import dev.anonymous.eilaji.doctor.utils.constants.Constant;
+
+public class MessagingActivity extends AppCompatActivity {
+    private static final String TAG = "MessagingActivity";
+    private ActivityMessagingBinding binding;
+    private StorageReference messagesImagesRef;
+    private DatabaseReference chatListRef;
+    private DatabaseReference chatRef;
+    private MessagesAdapter messagesAdapter;
+    private String chatId;
+    private String userUid, userFullName, userUrlImage, userToken;
+    private String receiverUid, receiverFullName, receiverUrlImage, receiverToken;
+    // Hesham
+    private final ChatSharedPreferences chatSharedPreferences = ChatSharedPreferences.getInstance();
+    private final FirebaseChatController firebaseChatController = FirebaseChatController.getInstance();
+    private ActivityResultLauncher<PickVisualMediaRequest> mediaRequestActivityResultLauncher;
+    private PickVisualMediaRequest mediaRequest;
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        binding = ActivityMessagingBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
+        // setup the media picker launcher
+        setupMediaPickerLauncher();
+
+        var user = firebaseChatController.getCurrentUser();
+        if (user != null) {
+            userUid = user.getUid();
+
+            userFullName = user.getDisplayName();
+            userUrlImage = String.valueOf(user.getPhotoUrl());
+
+            userToken = chatSharedPreferences.getToken();
+
+            // get the user data
+            getUserIntentData();
+
+            /*1System.out.println("Token: " + userToken);
+            System.out.println("receiverFullName: " + receiverFullName);
+            System.out.println("userFullName: " + userFullName);*/
+
+            initInstances();
+
+            // if the chat did exist than the adapter w recycler will be sat
+            checkChatExist(userUid, receiverUid);
+
+            setupClickListeners();
+        }
+    }
+
+    private void setupMediaPickerLauncher() {
+        mediaRequest = getPickVisualMediaRequestSettings();
+        mediaRequestActivityResultLauncher = registerForActivityResult(new ActivityResultContracts.PickVisualMedia(),
+                uri -> {
+                    if (uri != null) {
+                        // To Send Image Only When result Comeback
+                        sendMessage(userUid, receiverUid, null, uri);
+                    }
+                }
+                );
+    }
+    private void setupClickListeners() {
+        //.. to send a message
+        binding.buSendMessage.setOnClickListener(v -> buttonSendMessage());
+        //.. to send a image
+        binding.buSendImage.setOnClickListener(v -> buttonSendImage());
+    }
+    private void initInstances() {
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        chatListRef = database.getReference(Constant.CHAT_LIST_DOCUMENT);
+        chatRef = database.getReference(Constant.CHATS_DOCUMENT);
+
+        messagesImagesRef = FirebaseStorage.getInstance()
+                .getReference(Constant.MESSAGES_IMAGES_DOCUMENT);
+    }
+    private void getUserIntentData() {
+        Intent intent = getIntent();
+        if (intent != null) {
+            chatId = intent.getStringExtra("chat_id");
+            receiverUid = intent.getStringExtra("receiver_uid");
+            receiverFullName = intent.getStringExtra("receiver_full_name");
+            receiverUrlImage = intent.getStringExtra("receiver_image_url");
+            receiverToken = intent.getStringExtra("receiver_token");
+        }
+    }
+    private void buttonSendImage() {
+        mediaRequestActivityResultLauncher.launch(mediaRequest);
+    }
+    @NonNull
+    private static PickVisualMediaRequest getPickVisualMediaRequestSettings() {
+        return new PickVisualMediaRequest.Builder()
+                .setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE)
+                .build();
+    }
+    private void buttonSendMessage() {
+        if (chatId != null) {
+            String message = binding.edMessage.getText().toString().trim();
+
+            if (!TextUtils.isEmpty(message)) {
+                clearMessageField();
+                sendMessage(userUid, receiverUid, message, null);
+            }
+        }
+    }
+    private void clearMessageField() {
+        binding.edMessage.setText("");
+    }
+    private void sendMessage(String senderUid, final String receiverUid, String message, Uri imageUri) {
+        if (TextUtils.isEmpty(chatId)) {
+
+            String id = chatRef.push().getKey();
+            if (id != null) {
+                Map<String, Object> chatData = createChatData(senderUid, receiverUid);
+
+                sendChatDataToServer(senderUid, receiverUid, message, imageUri, id, chatData);
+            }
+
+        } else {
+
+            if (imageUri != null) uploadImageMassage(senderUid, receiverUid, imageUri);
+            else addMessageToChat(senderUid, receiverUid, message, null, null);
+        }
+    }
+    private void sendChatDataToServer(String senderUid, String receiverUid, String message, Uri imageUri, String id, Map<String, Object> chatData) {
+        chatRef.child(id)
+                .setValue(chatData)
+                .addOnCompleteListener(command -> {
+                    if (command.isSuccessful()) {
+                        Toast.makeText(this, "تم انشاء قالب المحادثة", Toast.LENGTH_SHORT).show();
+                        chatId = id;
+                        if (imageUri != null) {
+
+                            uploadImageMassage(senderUid, receiverUid, imageUri);
+
+                        } else {
+                            addMessageToChat(
+                                    senderUid,
+                                    receiverUid,
+                                    message,
+                                    null,
+                                    null
+                            );
+                        }
+                    }
+                }).addOnFailureListener(e -> Log.e(TAG, "sendMessage: " + e.getMessage()));
+    }
+    @NonNull
+    private static Map<String, Object> createChatData(String senderUid, String receiverUid) {
+        Map<String, Object> chatData = new HashMap<>();
+        chatData.put("sender_uid", senderUid);
+        chatData.put("receiver_uid", receiverUid);
+        return chatData;
+    }
+    private void uploadImageMassage(String senderUid, final String receiverUid, Uri imageUri) {
+        final String imageName = senderUid + "::" + System.currentTimeMillis();
+        StorageReference pdfRef = messagesImagesRef.child(imageName + ".jpg");
+
+        pdfRef.putFile(imageUri).addOnProgressListener(taskSnapshot -> {
+                    double progress = (100.0 * taskSnapshot.getBytesTransferred()) / taskSnapshot.getTotalByteCount();
+                    System.out.println(progress);
+                }).continueWithTask(task -> {
+                    if (!task.isSuccessful() && task.getException() != null) {
+                        throw task.getException();
+                    }
+                    return pdfRef.getDownloadUrl();
+                }).addOnSuccessListener(taskSnapshot -> {
+                    Toast.makeText(this, "تم رفع الصورة بنجاح", Toast.LENGTH_SHORT).show();
+                    addMessageToChat(
+                            senderUid,
+                            receiverUid,
+                            null,
+                            taskSnapshot.toString(),
+                            null
+                    );
+                }).addOnFailureListener(exception -> Log.e(TAG, "addImageToChat: " + exception.getMessage()));
+    }
+    private void addMessageToChat(String senderUid, final String receiverUid, String message,
+                                  String imageUrl, String medicineName) {
+        final MessageModel model = 
+                new MessageModel(
+                senderUid,
+                receiverUid,
+                message,
+                imageUrl,
+                medicineName,
+                System.currentTimeMillis()
+                );
+
+        chatRef.child(chatId)
+                .child(Constant.CHATS_CHILD_CHAT)
+                .push()
+                .setValue(model)
+                .addOnCompleteListener(command -> {
+                    if (command.isSuccessful()) {
+                        Toast.makeText(this, "تم ارسال الرسالة بنجاح", Toast.LENGTH_SHORT).show();
+
+                        FCMSend.pushNotificationToToken(
+                                this,
+                                userToken,
+                                userUid,
+                                userFullName,
+                                message,
+                                userUrlImage,
+                                imageUrl
+                        );
+
+                        updateChatList(senderUid, receiverUid, message, imageUrl);
+                    } else {
+                        Exception exception = command.getException();
+                        if (exception != null) {
+                            Toast.makeText(this, exception.getMessage(), Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                })
+                .addOnFailureListener(e -> Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show());
+    }
+    private void updateChatList(String senderUid, final String receiverUid, String lastMessageText,
+                                String lastMessageImage) {
+        final ChatModel model = 
+                new ChatModel(
+                chatId,
+                lastMessageText,
+                lastMessageImage,
+                senderUid,
+                receiverFullName,
+                receiverUrlImage,
+                receiverToken,
+                System.currentTimeMillis()
+                );
+
+        chatListRef.child(senderUid)
+                .child(receiverUid)
+                .setValue(model)
+                .addOnCompleteListener(command -> {
+                    if (command.isSuccessful()) {
+                        Toast.makeText(this, "تم تحديث قائمة المرسل", Toast.LENGTH_SHORT).show();
+                    }
+                });
+
+        model.setUserFullName(userFullName);
+        model.setUserImageUrl(userUrlImage);
+        model.setUserToken(userToken);
+
+        chatListRef.child(receiverUid)
+                .child(senderUid)
+                .setValue(model)
+                .addOnCompleteListener(command -> {
+                    if (command.isSuccessful()) {
+                        Toast.makeText(this, "تم تحديث قائمة المستقبل", Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
+    private void checkChatExist(String senderUid, final String receiverUid) {
+        final DatabaseReference reference = chatListRef.child(senderUid).child(receiverUid);
+
+        reference.get()
+                .addOnCompleteListener(command -> {
+                    binding.progressMessaging.setVisibility(View.GONE);
+                    if (command.isSuccessful()) {
+                        if (command.getResult().exists()) {
+                            Object chatIdValue = command.getResult()
+                                    .child(Constant.CHAT_LIST_CHILD_CHAT_ID)
+                                    .getValue();
+                            if (chatIdValue != null) {
+                                chatId = chatIdValue.toString();
+                                setupMessagesAdapter();
+                            }
+                        } else {
+                            chatId = "";
+                        }
+                    } else {
+                        Exception exception = command.getException();
+                        if (exception != null) {
+                            Toast.makeText(this, exception.getMessage(), Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                })
+                .addOnFailureListener(e ->Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show());
+    }
+    // Display Methods
+    private void setupMessagesAdapter() {
+        // make a reference to read and write
+        DatabaseReference currentChatRef = getMessagingDataReference();
+        
+        // fetch data and do a query and return it to be set
+        FirebaseRecyclerOptions<MessageModel> options = getMessageModelFirebaseRecyclerOptions(currentChatRef);
+
+        // question about the design.
+        boolean isRTL = isRTL();
+
+        // init the adapter
+        messagesAdapter = new MessagesAdapter(options, userUid, isRTL);
+        
+        // fix => Inconsistency detected. Invalid view holder adapter
+        /*
+LinearLayoutManager manager = new WrapContentLinearLayoutManager(this);
+*/
+
+        // set the manger with additional functionality
+        var manager = getLinearLayoutManager();
+
+        // Finally set the Recycler
+        setupRecyclerWithMessages(manager);
+
+        // scroll to Bottom when insert message to chat
+        messagesAdapter.registerAdapterDataObserver(
+                new MyScrollToBottomObserver(binding.recyclerMessaging, messagesAdapter, manager)
+        );
+
+        messagesAdapter.startListening();
+    }
+    private void setupRecyclerWithMessages(LinearLayoutManager manager) {
+        binding.recyclerMessaging.setLayoutManager(manager);
+        binding.recyclerMessaging.setAdapter(messagesAdapter);
+    }
+    private LinearLayoutManager getLinearLayoutManager() {
+        LinearLayoutManager manager = new LinearLayoutManager(this);
+        // scroll to end recycler
+        manager.setStackFromEnd(true);
+        return manager;
+    }
+    private boolean isRTL() {
+        return binding.recyclerMessaging.getLayoutDirection() == View.LAYOUT_DIRECTION_RTL;
+    }
+    @NonNull
+    private static FirebaseRecyclerOptions<MessageModel> getMessageModelFirebaseRecyclerOptions(DatabaseReference currentChatRef) {
+            return new FirebaseRecyclerOptions.Builder<MessageModel>()
+                .setQuery(currentChatRef, MessageModel.class)
+                .build();
+    }
+    @NonNull
+    private static DatabaseReference getMessagingDataReference() {
+        var chatController = FirebaseChatController.getInstance();
+            return chatController.database
+                .getReference(Constant.CHATS_DOCUMENT)
+                .child(Constant.CHATS_CHILD_CHAT);
+    }
+    // LifeCycle Methods
+    @Override
+    protected void onResume() {
+        if (receiverUid != null) {
+            chatSharedPreferences.putCurrentUserChattingUID(receiverUid);
+//            preferences.edit().putString(Constant.CURRENT_USER_CHATTING_UID, receiverUid).apply();
+        }
+        super.onResume();
+    }
+    @Override
+    protected void onPause() {
+        if (receiverUid != null) {
+            chatSharedPreferences.removeCurrentUserChattingUID();
+//            preferences.edit().remove(Constant.CURRENT_USER_CHATTING_UID).apply();
+        }
+        super.onPause();
+    }
+    @Override
+    protected void onDestroy() {
+        if (messagesAdapter != null) {
+            messagesAdapter.stopListening();
+        }
+        super.onDestroy();
+    }
+}
