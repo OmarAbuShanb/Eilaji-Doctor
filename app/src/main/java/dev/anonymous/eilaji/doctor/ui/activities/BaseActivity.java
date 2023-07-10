@@ -1,12 +1,14 @@
 package dev.anonymous.eilaji.doctor.ui.activities;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.MenuItem;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.GravityCompat;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 
@@ -21,7 +23,11 @@ import dev.anonymous.eilaji.doctor.utils.Utils;
 
 public class BaseActivity extends AppCompatActivity {
     private ActivityBaseBinding binding;
+
+    private SharedPreferences preferences;
+
     public ActionBarDrawerToggle actionBarDrawerToggle;
+
     private final FirebaseController firebaseController = FirebaseController.getInstance();
     private final FirebaseUser user = firebaseController.getCurrentUser();
 
@@ -37,6 +43,8 @@ public class BaseActivity extends AppCompatActivity {
         // set up the ActionBar
         setSupportActionBar(binding.includeAppBarLayoutBase.toolbarApp);
 
+        preferences = getSharedPreferences("user_info", MODE_PRIVATE);
+
         // setup the Drawer Layout
         setUpDrawerLayout();
         // setup the NavController
@@ -51,7 +59,8 @@ public class BaseActivity extends AppCompatActivity {
 
     private void setUserPhoto() {
         if (user != null) {
-        Utils.loadImage(this, String.valueOf(user.getPhotoUrl())).into(binding.ivPharmacyNav);
+            String pharmacyImageUrl = preferences.getString("pharmacy_image_url", null);
+            Utils.loadImage(this, pharmacyImageUrl).into(binding.ivPharmacyNav);
         }
     }
 
@@ -64,24 +73,33 @@ public class BaseActivity extends AppCompatActivity {
     private void setupListeners() {
         binding.buChats.setOnClickListener(view -> {
             // to be moving to the chat
+            closeDrawer();
             navController.navigate(R.id.navigation_chats);
         });
         binding.buEditUserInfo.setOnClickListener(view -> {
             // to be moving to the editScreen
+            closeDrawer();
             navController.navigate(R.id.navigation_editInformation);
         });
         binding.buLogout.setOnClickListener(view -> {
             // to sig-out
             firebaseController.signOut();
+
             // to do and clear the user session
             //.. appShearedPreference = clear..
-
+            closeDrawer();
             // at the end show the login
-            var intent = new Intent(this,MainActivity.class);
-            intent.putExtra("fragmentType","Login");
+            var intent = new Intent(this, MainActivity.class);
+            intent.putExtra("fragmentType", "Login");
             startActivity(intent);
             finish();
         });
+    }
+
+    private void closeDrawer() {
+        if (binding.drawerLayout.isDrawerOpen(GravityCompat.START)) {
+            binding.drawerLayout.closeDrawer(GravityCompat.START);
+        }
     }
 
     // some of the drawer settings

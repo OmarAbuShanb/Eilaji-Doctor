@@ -1,36 +1,40 @@
 package dev.anonymous.eilaji.doctor.firebase;
 
-import android.net.Uri;
-import android.text.TextUtils;
-import android.util.Log;
+import static android.content.Context.MODE_PRIVATE;
 
-import androidx.activity.result.PickVisualMediaRequest;
-import androidx.activity.result.contract.ActivityResultContracts;
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.net.Uri;
+import android.util.Log;
+import android.widget.Toast;
 
 import com.firebase.ui.database.FirebaseRecyclerOptions;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
+import dev.anonymous.eilaji.doctor.models.ChatModel;
 import dev.anonymous.eilaji.doctor.models.MessageModel;
 import dev.anonymous.eilaji.doctor.utils.constants.Constant;
 
 public class FirebaseChatManager {
     private static final String TAG = "FirebaseChatManager";
 
-    private final StorageReference messagesImagesRef;
-    private final DatabaseReference chatListRef;
+    private final FirebaseStorage storage;
+    public final DatabaseReference chatListRef;
     private final DatabaseReference chatRef;
 
     public FirebaseChatManager() {
         FirebaseDatabase database = FirebaseDatabase.getInstance();
-        messagesImagesRef = FirebaseStorage.getInstance().getReference(Constant.MESSAGES_IMAGES_DOCUMENT);
+        storage = FirebaseStorage.getInstance();
         chatListRef = database.getReference(Constant.CHAT_LIST_DOCUMENT);
         chatRef = database.getReference(Constant.CHATS_DOCUMENT);
     }
@@ -39,27 +43,47 @@ public class FirebaseChatManager {
         return FirebaseAuth.getInstance().getCurrentUser();
     }
 
+    public DatabaseReference getMessagingDataReference(String chatId) {
+        return chatRef.child(chatId).child(Constant.CHATS_CHILD_CHAT);
+    }
+
+    public StorageReference getUserStorageReference(String userUid, String childName) {
+        return storage.getReference(userUid).child(childName);
+    }
+
+    public interface GetTokenListener {
+        void onGetTokenSuccessfully(String token);
+    }
+
+    public void getToken(GetTokenListener listener) {
+        FirebaseMessaging.getInstance()
+                .getToken()
+                .addOnSuccessListener(token -> {
+                    Log.d(TAG, "getToken: " + token);
+                    listener.onGetTokenSuccessfully(token);
+                })
+                .addOnFailureListener(e ->
+                        Log.e(TAG, "onCreate:getToken: " + e.getMessage()));
+    }
+
     public void createChat(String senderUid, String receiverUid, ChatCreationCallback callback) {
-        String id = chatRef.push().getKey();
-        if (id != null) {
+        String chatId = chatRef.push().getKey();
+        if (chatId != null) {
             Map<String, Object> chatData = createChatData(senderUid, receiverUid);
-            sendChatDataToServer(id, chatData, callback);
+
+            chatRef.child(chatId)
+                    .setValue(chatData)
+                    .addOnCompleteListener(task -> {
+                        if (task.isSuccessful()) {
+                            callback.onChatCreated(chatId, true);
+                        } else {
+                            Log.e(TAG, "Failed to send chat data: " + task.getException());
+                            callback.onChatCreated(null, false);
+                        }
+                    });
         } else {
             callback.onChatCreated(null, false);
         }
-    }
-
-    private void sendChatDataToServer(String id, Map<String, Object> chatData, ChatCreationCallback callback) {
-        chatRef.child(id)
-                .setValue(chatData)
-                .addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
-                        callback.onChatCreated(id, true);
-                    } else {
-                        Log.e(TAG, "Failed to send chat data: " + task.getException());
-                        callback.onChatCreated(null, false);
-                    }
-                });
     }
 
     private Map<String, Object> createChatData(String senderUid, String receiverUid) {
@@ -75,11 +99,15 @@ public class FirebaseChatManager {
             if (task.isSuccessful()) {
                 boolean exists = task.getResult().exists();
                 if (exists) {
-                    Object chatIdValue = task.getResult().child(Constant.CHAT_LIST_CHILD_CHAT_ID).getValue();
-                    callback.onChatExistenceChecked(true, chatIdValue);
-                }else {
-                    callback.onChatExistenceChecked(false, "");
+                    Object chatIdValue = task.getResult().
+                            child(Constant.CHAT_LIST_CHILD_CHAT_ID).
+                            getValue();
+                    if (chatIdValue != null) {
+                        callback.onChatExistenceChecked(true, chatIdValue.toString());
+                        return;
+                    }
                 }
+                callback.onChatExistenceChecked(false, "");
             } else {
                 Log.e(TAG, "Failed to check chat existence: " + task.getException());
                 callback.onChatExistenceChecked(false, null);
@@ -87,64 +115,36 @@ public class FirebaseChatManager {
         });
     }
 
-    public void sendMessage(String senderUid, String receiverUid, String chatId, String message, Uri imageUri) {
-        if (TextUtils.isEmpty(chatId)) {
-            createNewChatAndSendMessage(senderUid, receiverUid, message, imageUri);
-        } else {
-            if (imageUri != null) {
-                uploadImageMessage(senderUid, receiverUid, chatId, imageUri);
-            } else {
-                addMessageToChat(senderUid, receiverUid, chatId, message, null);
-            }
-        }
-    }
+    public void uploadImageMessage(String userUid, String childName, Uri imageUri, UploadImageCallback callback) {
+        StorageReference storageUserReference = getUserStorageReference(userUid, childName)
+                .child(UUID.randomUUID().toString() + ".jpg");
 
-    private void createNewChatAndSendMessage(String senderUid, String receiverUid, String message, Uri imageUri) {
-        createChat(senderUid, receiverUid, (id, success) -> {
-            if (success) {
-                if (imageUri != null) {
-                    uploadImageMessage(senderUid, receiverUid, id, imageUri);
-                } else {
-                    addMessageToChat(senderUid, receiverUid, id, message, null);
-                }
-            } else {
-                Log.e(TAG, "Failed to create chat: " + id);
-            }
-        });
-    }
-
-    private void uploadImageMessage(String senderUid, String receiverUid, String chatId, Uri imageUri) {
-        String imageName = senderUid + "::" + System.currentTimeMillis();
-        StorageReference imageRef = messagesImagesRef.child(imageName + ".jpg");
-
-        imageRef.putFile(imageUri)
-                .addOnSuccessListener(taskSnapshot -> imageRef.getDownloadUrl()
-                        .addOnSuccessListener(uri -> {
-                            String imageUrl = uri.toString();
-                            addMessageToChat(senderUid, receiverUid, chatId, null, imageUrl);
-                        })
-                        .addOnFailureListener(e -> Log.e(TAG, "Failed to get image download URL: " + e.getMessage())))
-                .addOnFailureListener(e -> Log.e(TAG, "Failed to upload image: " + e.getMessage()))
+        storageUserReference.putFile(imageUri)
                 .addOnProgressListener(taskSnapshot -> {
                     double progress = (100.0 * taskSnapshot.getBytesTransferred()) / taskSnapshot.getTotalByteCount();
                     Log.d(TAG, "Upload progress: " + progress);
+                })
+                .continueWithTask(task -> {
+                    if (!task.isSuccessful() && task.getException() != null) {
+                        throw task.getException();
+                    }
+                    return storageUserReference.getDownloadUrl();
+                })
+                .addOnSuccessListener(uri -> {
+                    callback.onImageUploaded(uri.toString(), true);
+//                  addMessageToChat(senderUid, receiverUid, chatId, null, imageUrl);
+                })
+                .addOnFailureListener(e -> {
+                    callback.onImageUploaded(null, false);
+                    Log.e(TAG, "Failed to upload image: " + e.getMessage());
                 });
     }
 
-    private void addMessageToChat(String senderUid, String receiverUid, String chatId, String message, String imageUrl) {
-        MessageModel model = new MessageModel(
-                senderUid,
-                receiverUid,
-                message,
-                imageUrl,
-                null,
-                System.currentTimeMillis()
-        );
-
+    public void addMessageToChat(String chatId, MessageModel messageModel) {
         chatRef.child(chatId)
                 .child(Constant.CHATS_CHILD_CHAT)
                 .push()
-                .setValue(model)
+                .setValue(messageModel)
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
                         Log.d(TAG, "Message sent successfully");
@@ -153,11 +153,27 @@ public class FirebaseChatManager {
                         Log.e(TAG, "Failed to send message: " + task.getException());
                     }
                 })
-                .addOnFailureListener(e -> Log.e(TAG, "Failed to send message: " + e.getMessage()));
+                .addOnFailureListener(e ->
+                        Log.e(TAG, "Failed to send message: " + e.getMessage()));
     }
 
-    public DatabaseReference getMessagingDataReference(String chatId) {
-        return chatRef.child(chatId).child(Constant.CHATS_CHILD_CHAT);
+    public void updateChatList(
+            String user1Uid,
+            String user2Uid,
+            ChatModel chatModel
+//            , UpdateChatListCallback updateChatListCallback
+    ) {
+        chatListRef.child(user1Uid)
+                .child(user2Uid)
+                .setValue(chatModel)
+                .addOnCompleteListener(command -> {
+                    if (command.isSuccessful()) {
+//                        updateChatListCallback.onChatListUpdated(true, null);
+                    }
+                }).addOnFailureListener(e -> {
+//                    updateChatListCallback.onChatListUpdated(true, e.getMessage());
+                    Log.e(TAG, "updateChatList: " + e.getMessage());
+                });
     }
 
     public FirebaseRecyclerOptions<MessageModel> getMessageModelOptions(DatabaseReference currentChatRef) {
@@ -166,10 +182,12 @@ public class FirebaseChatManager {
                 .build();
     }
 
-    public PickVisualMediaRequest getPickVisualMediaRequestSettings() {
-        return new PickVisualMediaRequest.Builder()
-                .setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE)
-                .build();
+    public interface UpdateChatListCallback {
+        void onChatListUpdated(boolean success, String error);
+    }
+
+    public interface UploadImageCallback {
+        void onImageUploaded(String imageUrl, boolean success);
     }
 
     public interface ChatCreationCallback {
@@ -177,6 +195,6 @@ public class FirebaseChatManager {
     }
 
     public interface ChatExistenceCallback {
-        void onChatExistenceChecked(boolean exists, Object chatIdValue);
+        void onChatExistenceChecked(boolean exists, String chatIdValue);
     }
 }

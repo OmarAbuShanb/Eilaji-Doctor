@@ -68,8 +68,7 @@
                 android:imeOptions="actionNext"
                 android:importantForAutofill="no"
                 android:inputType="none|textNoSuggestions"
-                android:maxLines="1"
-                android:textEditSuggestionItemLayout="@drawable/selector_text_input_account_information" />
+                android:maxLines="1" />
 
         </com.google.android.material.textfield.TextInputLayout>
 

@@ -4,7 +4,6 @@ import static android.content.Context.MODE_PRIVATE;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,21 +17,21 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 
-import java.util.Map;
-
-import dev.anonymous.eilaji.doctor.utils.constants.Constant;
 import dev.anonymous.eilaji.doctor.databinding.FragmentEditInformationBinding;
+import dev.anonymous.eilaji.doctor.utils.Utils;
+import dev.anonymous.eilaji.doctor.utils.constants.Constant;
 
 public class EditInformationFragment extends Fragment {
     private static final String TAG = "EditInformationFragment";
 
     FragmentEditInformationBinding binding;
+
     //    private EditInformationViewModel mViewModel;
     private CollectionReference pharmaciesCollection;
 
     private String userUid,
-            fullName,
-            urlImage,
+            pharmacyName,
+            pharmacyImageUrl,
             address;
 
     private SharedPreferences preferences;
@@ -49,11 +48,13 @@ public class EditInformationFragment extends Fragment {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user != null) {
             userUid = user.getUid();
-            fullName = user.getDisplayName();
-            urlImage = String.valueOf(user.getPhotoUrl());
+
+            pharmacyImageUrl = preferences.getString("pharmacy_image_url", null);
+            pharmacyName = preferences.getString("pharmacy_name", null);
             address = preferences.getString("address", null);
 
-            binding.edPharmacyName.setText(fullName);
+            Utils.loadImage(getActivity(), pharmacyImageUrl).into(binding.ivPharmacy);
+            binding.edPharmacyName.setText(pharmacyName);
             binding.edAddress.setText(address);
 
             binding.buSaveEdits.setOnClickListener(v -> {
@@ -61,25 +62,5 @@ public class EditInformationFragment extends Fragment {
             });
         }
         return binding.getRoot();
-    }
-
-    void getAddress(String userUid) {
-        pharmaciesCollection.document(userUid)
-                .get()
-                .addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
-                        Map<String, Object> data = task.getResult().getData();
-                        if (data != null) {
-                            String address = String.valueOf(data.get("address"));
-                            preferences.edit().putString("address", address).apply();
-                        }
-                    } else {
-                        if (task.getException() != null) {
-                            Log.e(TAG, "getAddress:task.getException(): "
-                                    + task.getException().getMessage());
-                        }
-                    }
-                }).addOnFailureListener(e ->
-                        Log.e(TAG, "getAddress:addOnFailureListener: " + e.getMessage()));
     }
 }

@@ -5,26 +5,6 @@ import retrofit2.http.Body;
 import retrofit2.http.Headers;
 import retrofit2.http.POST;
 
-//  apiService = Client.getClient("https://fcm.googleapis.com/").create(APIService.class);
-
-//    apiService.sendNotification(sender)
-//            .enqueue(new Callback<MyResponse>() {
-//    @Override
-//    public void onResponse(@NonNull Call<MyResponse> call, @NonNull Response<MyResponse> response) {
-//            if (response.code() == 200) {
-//                if (response.body().success != 1) {
-//                 Toast.makeText(MessageActivity.this, "Failed!", Toast.LENGTH_SHORT).show();
-//                  Log.e("TAGOMAR", "onResponse: " + response.body() );
-//            }
-//            }
-//            }
-//
-//    @Override
-//    public void onFailure(@NonNull Call<MyResponse> call, @NonNull Throwable t) {
-//
-//            }
-//            });
-
 public interface APIService {
     @Headers({
             "Content-Type:application/json",

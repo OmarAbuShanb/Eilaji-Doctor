@@ -6,11 +6,6 @@
     app:startDestination="@id/navigation_login">
 
     <fragment
-        android:id="@+id/navigation_forgotPassword"
-        android:name="dev.anonymous.eilaji.doctor.ui.fragments.guard.ForgotPasswordFragment"
-        android:label="fragment_forgot_password"
-        tools:layout="@layout/fragment_forgot_password" />
-    <fragment
         android:id="@+id/navigation_login"
         android:name="dev.anonymous.eilaji.doctor.ui.fragments.guard.LoginFragment"
         android:label="fragment_login"
@@ -20,4 +15,11 @@
         android:name="dev.anonymous.eilaji.doctor.ui.fragments.guard.RegisterFragment"
         android:label="fragment_register"
         tools:layout="@layout/fragment_register" />
+
+    <fragment
+        android:id="@+id/navigation_forgotPassword"
+        android:name="dev.anonymous.eilaji.doctor.ui.fragments.guard.ForgotPasswordFragment"
+        android:label="fragment_forgot_password"
+        tools:layout="@layout/fragment_forgot_password" />
+
 </navigation>

@@ -52,24 +52,24 @@ public class FCMSend {
             JsonObjectRequest jsonObjectRequest =
                     new JsonObjectRequest(Request.Method.POST, BASE_URL, json,
                             response -> {
-                                try {
-                                    int success = response.getInt("success");
-                                    if (success == 1) {
-                                        Toast.makeText(context, "تم ارسال الاشعار بنجاح", Toast.LENGTH_SHORT).show();
-                                    } else {
-                                        // "results" : [{"error" : "NotRegistered"}]
-                                        Object errorObj = response.getJSONArray("results").get(0);
-                                        JSONObject object = (JSONObject) errorObj;
-                                        String errorMessage = object.get("error").toString();
-                                        if (errorMessage.equals("NotRegistered")) {
-                                            Toast.makeText(context, "هذا المسخدم غير موجود", Toast.LENGTH_SHORT).show();
-                                        } else {
-                                            Toast.makeText(context, "لم يتم ارسال الاشعار (" + errorMessage + "(", Toast.LENGTH_SHORT).show();
-                                        }
-                                    }
-                                } catch (ClassCastException | JSONException e) {
-                                    Log.e(TAG, "pushNotificationToToken:response: " + e.getMessage());
-                                }
+//                                try {
+//                                    int success = response.getInt("success");
+//                                    if (success == 1) {
+//                                        Toast.makeText(context, "تم ارسال الاشعار بنجاح", Toast.LENGTH_SHORT).show();
+//                                    } else {
+//                                        // "results" : [{"error" : "NotRegistered"}]
+//                                        Object errorObj = response.getJSONArray("results").get(0);
+//                                        JSONObject object = (JSONObject) errorObj;
+//                                        String errorMessage = object.get("error").toString();
+//                                        if (errorMessage.equals("NotRegistered")) {
+//                                            Toast.makeText(context, "هذا المسخدم غير موجود", Toast.LENGTH_SHORT).show();
+//                                        } else {
+//                                            Toast.makeText(context, "لم يتم ارسال الاشعار (" + errorMessage + "(", Toast.LENGTH_SHORT).show();
+//                                        }
+//                                    }
+//                                } catch (ClassCastException | JSONException e) {
+//                                    Log.e(TAG, "pushNotificationToToken:response: " + e.getMessage());
+//                                }
                             },
                             error -> Log.e(TAG, "pushNotificationToToken:error: " + error.getMessage())) {
                         @Override

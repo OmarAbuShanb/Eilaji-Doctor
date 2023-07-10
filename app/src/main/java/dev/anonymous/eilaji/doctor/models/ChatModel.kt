@@ -3,7 +3,7 @@ package dev.anonymous.eilaji.doctor.models
 class ChatModel {
     var chatId: String? = null
     var lastMessageText: String? = null
-    var lastMessageImage: String? = null
+    var lastMessageImageUrl: String? = null
     var lastMessageSenderUid: String? = null
     var userFullName: String? = null
     var userImageUrl: String? = null
@@ -14,7 +14,7 @@ class ChatModel {
     constructor(
         chatId: String?,
         lastMessageText: String?,
-        lastMessageImage: String?,
+        lastMessageImageUrl: String?,
         lastMessageSenderUid: String?,
         userFullName: String?,
         userImageUrl: String?,
@@ -23,7 +23,7 @@ class ChatModel {
     ) {
         this.chatId = chatId
         this.lastMessageText = lastMessageText
-        this.lastMessageImage = lastMessageImage
+        this.lastMessageImageUrl = lastMessageImageUrl
         this.lastMessageSenderUid = lastMessageSenderUid
         this.userFullName = userFullName
         this.userImageUrl = userImageUrl

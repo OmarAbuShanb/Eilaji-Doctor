@@ -30,7 +30,6 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.auth.UserProfileChangeRequest;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -42,6 +41,7 @@ import java.util.Objects;
 
 import dev.anonymous.eilaji.doctor.R;
 import dev.anonymous.eilaji.doctor.databinding.FragmentRegisterBinding;
+import dev.anonymous.eilaji.doctor.firebase.FirebaseChatManager;
 import dev.anonymous.eilaji.doctor.firebase.FirebaseController;
 import dev.anonymous.eilaji.doctor.ui.activities.BaseActivity;
 import dev.anonymous.eilaji.doctor.utils.AppController;
@@ -53,6 +53,7 @@ public class RegisterFragment extends Fragment {
     private FragmentRegisterBinding binding;
     private Uri pharmacyImageUri;
 
+    private FirebaseChatManager firebaseChatManager;
     private StorageReference messagesImagesRef;
     private CollectionReference pharmaciesCollection;
 
@@ -76,13 +77,17 @@ public class RegisterFragment extends Fragment {
 
     private ActivityResultLauncher<String[]> requestPermissionLauncher;
 
-    private static final String[] REQUIRED_PERMISSIONS = {Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION};
+    private static final String[] REQUIRED_PERMISSIONS = {
+            Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION
+    };
 
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         messagesImagesRef = FirebaseStorage.getInstance().getReference(Constant.PHARMACIES_IMAGES_DOCUMENT);
+
+        firebaseChatManager = new FirebaseChatManager();
 
         pharmaciesCollection = FirebaseFirestore.getInstance().collection(Constant.PHARMACIES_COLLECTION);
 
@@ -129,8 +134,8 @@ public class RegisterFragment extends Fragment {
 
         binding.buCreateAnAccount.setOnClickListener(v -> {
             collectUserInputs();
-            if (!TextUtils.isEmpty(email) && !TextUtils.isEmpty(password)&& !TextUtils.isEmpty(address)) {
-                binding.buCreateAnAccount.setEnabled(false);
+            if (!TextUtils.isEmpty(email) && !TextUtils.isEmpty(password) && !TextUtils.isEmpty(address)) {
+//                binding.buCreateAnAccount.setEnabled(false);
                 registerPharmacy(email, password);
             } else {
                 Utils.getInstance().showSnackBar(binding.getRoot(), "Enter All Fields!");
@@ -189,7 +194,8 @@ public class RegisterFragment extends Fragment {
     }
 
     private void pickImage() {
-        PickVisualMediaRequest mediaRequest = new PickVisualMediaRequest.Builder().setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE).build();
+        PickVisualMediaRequest mediaRequest = new PickVisualMediaRequest.Builder()
+                .setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE).build();
         pickMedia.launch(mediaRequest);
     }
 
@@ -201,13 +207,14 @@ public class RegisterFragment extends Fragment {
         password = Objects.requireNonNull(binding.edPassword.getText()).toString().trim();
     }
 
-    ActivityResultLauncher<PickVisualMediaRequest> pickMedia = registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), uri -> {
-        if (uri != null) {
-            pharmacyImageUri = uri;
-            binding.imageHint.setVisibility(View.INVISIBLE);
-            binding.ivPharmacy.setImageURI(uri);
-        }
-    });
+    ActivityResultLauncher<PickVisualMediaRequest> pickMedia = registerForActivityResult(
+            new ActivityResultContracts.PickVisualMedia(), uri -> {
+                if (uri != null) {
+                    pharmacyImageUri = uri;
+                    binding.imageHint.setVisibility(View.INVISIBLE);
+                    binding.ivPharmacy.setImageURI(uri);
+                }
+            });
 
     private void registerPharmacy(String email, String password) {
         firebaseAuth.createUserWithEmailAndPassword(email, password).addOnCompleteListener(task -> {
@@ -226,53 +233,31 @@ public class RegisterFragment extends Fragment {
     }
 
     private void uploadPharmacyImage(Uri pharmacyImage) {
-        final String imageName = userUid + "::" + System.currentTimeMillis();
-        StorageReference pdfRef = messagesImagesRef.child(imageName + ".jpg");
+        firebaseChatManager.uploadImageMessage(
+                userUid,
+                "PharmaciesImages",
+                pharmacyImage, (imageUrl, success) -> {
+                    if (success) {
+                        token = preferences.getString("token", null);
 
-        pdfRef.putFile(pharmacyImage).addOnProgressListener(taskSnapshot -> {
-            double progress = (100.0 * taskSnapshot.getBytesTransferred()) / taskSnapshot.getTotalByteCount();
-            System.out.println(progress);
-        }).continueWithTask(task -> {
-            if (!task.isSuccessful() && task.getException() != null) {
-                throw task.getException();
-            }
-            return pdfRef.getDownloadUrl();
-        }).addOnSuccessListener(taskSnapshot -> {
-            Toast.makeText(getActivity(), "تم رفع الصورة بنجاح", Toast.LENGTH_SHORT).show();
-            updateUserProfile(pharmacyName, taskSnapshot);
-        }).addOnFailureListener(exception -> Log.e(TAG, "uploadPharmacyImage: " + exception.getMessage()));
-    }
-
-
-    private void updateUserProfile(String fullName, Uri imageUrl) {
-        UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder().setDisplayName(fullName).setPhotoUri(imageUrl).build();
-
-        FirebaseUser user = firebaseAuth.getCurrentUser();
-        if (user != null) {
-            user.updateProfile(profileUpdates).addOnCompleteListener(task -> {
-                if (task.isSuccessful()) {
-                    Toast.makeText(getActivity(), "update Profile Successful", Toast.LENGTH_SHORT).show();
-
-                    SharedPreferences preferences = requireActivity().getSharedPreferences("user_info", MODE_PRIVATE);
-                    token = preferences.getString("token", null);
-                    if (token == null) {
-                        Utils.getToken(getActivity(), newToken -> {
-                            token = newToken;
+                        if (token == null) {
+                            firebaseChatManager.getToken(newToken -> {
+                                token = newToken;
+                                createPharmacy(userUid, imageUrl);
+                            });
+                        } else {
                             createPharmacy(userUid, imageUrl);
-                        });
-                    } else {
-                        createPharmacy(userUid, imageUrl);
+                        }
                     }
                 }
-            });
-        }
+        );
     }
 
-    private void createPharmacy(String userUid, Uri pharmacyImageUrl) {
+    private void createPharmacy(String userUid, String pharmacyImageUrl) {
         HashMap<String, Object> pharmacyData = new HashMap<>();
         pharmacyData.put("uid", userUid);
         pharmacyData.put("pharmacy_name", pharmacyName);
-        pharmacyData.put("pharmacy_image_url", String.valueOf(pharmacyImageUrl));
+        pharmacyData.put("pharmacy_image_url", pharmacyImageUrl);
         pharmacyData.put("phone", phone);
         pharmacyData.put("address", address);
         pharmacyData.put("lat", lat);
@@ -282,9 +267,12 @@ public class RegisterFragment extends Fragment {
 
         pharmaciesCollection.document(userUid).set(pharmacyData).addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
-                preferences.edit().putString("address", address).apply();
-                //TODO : Replace
-//                        ChatSharedPreferences.getInstance().putAddress(address);
+                preferences.edit()
+                        .putString("pharmacy_name", pharmacyName)
+                        .putString("pharmacy_image_url", pharmacyImageUrl)
+                        .putString("address", address)
+                        .putString("token", token)
+                        .apply();
 
                 Toast.makeText(getActivity(), "create pharmacy successful", Toast.LENGTH_SHORT).show();
 

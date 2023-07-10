@@ -68,7 +68,7 @@ public class ChatsAdapter extends FirebaseRecyclerAdapter<ChatModel, ChatsAdapte
             binding.tvUserReceiver.setText(chat.getUserFullName());
             binding.tvLastMassageDate.setText(Utils.formatTimeStamp(chat.getTimestamp()));
 
-            if (chat.getLastMessageImage() != null && !chat.getLastMessageImage().isEmpty()) {
+            if (chat.getLastMessageImageUrl() != null && !chat.getLastMessageImageUrl().isEmpty()) {
                 binding.tvLastMessageText.setText(
                         userUid.equals(chat.getLastMessageSenderUid())
                                 ? "you: image"

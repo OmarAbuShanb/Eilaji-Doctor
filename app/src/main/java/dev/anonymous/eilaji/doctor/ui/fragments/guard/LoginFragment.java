@@ -34,8 +34,10 @@ import dev.anonymous.eilaji.doctor.utils.constants.Constant;
 public class LoginFragment extends Fragment {
     private static final String TAG = "LoginFragment";
     private FragmentLoginBinding binding;
+
     private CollectionReference pharmaciesCollection;
     private SharedPreferences preferences;
+
     // hesham changes
     private final FirebaseController firebaseController = FirebaseController.getInstance();
 
@@ -44,10 +46,14 @@ public class LoginFragment extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         // initialing the collection
-        pharmaciesCollection = FirebaseFirestore.getInstance().collection(Constant.PHARMACIES_COLLECTION);
+        pharmaciesCollection = FirebaseFirestore.getInstance()
+                .collection(Constant.PHARMACIES_COLLECTION);
+
         // here initialing the preferences
         preferences = requireActivity().getSharedPreferences("user_info", MODE_PRIVATE);
+
         // navController
         navController = NavHostFragment.findNavController(this);
     }
@@ -73,11 +79,8 @@ public class LoginFragment extends Fragment {
         setupListeners();
     }
 
-
     // helper methods
     private void setupListeners() {
-
-        // the login button
         binding.buLogin.setOnClickListener(v -> {
             String email = Objects.requireNonNull(binding.edEmail.getText()).toString().trim();
             String password = Objects.requireNonNull(binding.edPassword.getText()).toString().trim();
@@ -88,18 +91,51 @@ public class LoginFragment extends Fragment {
             }
         });
 
-        binding.buSignUp.setOnClickListener(view -> navController.navigate(R.id.navigation_register));
+        binding.buSignUp.setOnClickListener(v -> navController.navigate(R.id.navigation_register));
     }
 
-    private void getAddress(String userUid) {
+    private void signIn(String email, String password) {
+        firebaseController.getAuth()
+                .signInWithEmailAndPassword(email, password)
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        Toast.makeText(getActivity(), "Authentication isSuccessful!", Toast.LENGTH_SHORT).show();
+                        String userUid = Objects.requireNonNull(task.getResult().getUser()).getUid();
+
+                        getAddress(userUid);
+                    } else {
+                        Toast.makeText(getActivity(), "Authentication failed!", Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
+
+    void getAddress(String userUid) {
         pharmaciesCollection.document(userUid)
                 .get()
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
-                        Map<String, Object> data = task.getResult().getData();
-                        if (data != null) {
-                            String address = String.valueOf(data.get("address"));
-                            preferences.edit().putString("address", address).apply();
+                        boolean pharmaciesExists = task.getResult().exists();
+                        if (pharmaciesExists) {
+                            Map<String, Object> data = task.getResult().getData();
+                            if (data != null) {
+                                String pharmacyName = String.valueOf(data.get("pharmacy_name"));
+                                String pharmacyImageUrl = String.valueOf(data.get("pharmacy_image_url"));
+                                String address = String.valueOf(data.get("address"));
+
+                                preferences.edit()
+                                        .putString("pharmacy_name", pharmacyName)
+                                        .putString("pharmacy_image_url", pharmacyImageUrl)
+                                        .putString("address", address)
+                                        .apply();
+
+                                moveToBaseActivity();
+                            }
+                        } else {
+                            Toast.makeText(
+                                    getActivity(),
+                                    "لم يتم قبول صيدليتك\nسيصلك اشعار عند مراجعة الطلب",
+                                    Toast.LENGTH_SHORT
+                            ).show();
                         }
                     } else {
                         if (task.getException() != null) {
@@ -110,25 +146,4 @@ public class LoginFragment extends Fragment {
                 }).addOnFailureListener(e ->
                         Log.e(TAG, "getAddress:addOnFailureListener: " + e.getMessage()));
     }
-
-    // MainMethods
-    private void signIn(String email, String password) {
-        firebaseController.getAuth().signInWithEmailAndPassword(email, password)
-                .addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
-                        Toast.makeText(getActivity(), "Authentication isSuccessful!", Toast.LENGTH_SHORT).show();
-                        String userUid = Objects.requireNonNull(task.getResult().getUser()).getUid();
-
-                        // get the user address and store it
-                        getAddress(userUid);
-
-                        // Done SignIn (Login)
-                        moveToBaseActivity();
-
-                    } else {
-                        Toast.makeText(getActivity(), "Authentication failed!", Toast.LENGTH_SHORT).show();
-                    }
-                });
-    }
-
 }

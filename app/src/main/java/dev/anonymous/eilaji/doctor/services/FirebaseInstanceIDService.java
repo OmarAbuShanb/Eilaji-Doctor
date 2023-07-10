@@ -1,6 +1,5 @@
 package dev.anonymous.eilaji.doctor.services;
 
-import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.util.Log;
 
@@ -11,7 +10,6 @@ import com.google.firebase.messaging.RemoteMessage;
 
 import dev.anonymous.eilaji.doctor.storage.ChatSharedPreferences;
 import dev.anonymous.eilaji.doctor.utils.UtilsNotifications;
-import dev.anonymous.eilaji.doctor.utils.constants.Constant;
 
 public class FirebaseInstanceIDService extends FirebaseMessagingService {
     private final ChatSharedPreferences chatSharedPreferences = ChatSharedPreferences.getInstance();
@@ -20,6 +18,8 @@ public class FirebaseInstanceIDService extends FirebaseMessagingService {
     @Override
     public void onNewToken(@NonNull String token) {
         super.onNewToken(token);
+
+        Log.d(TAG, "onNewToken: " + token);
         chatSharedPreferences.putToken(token);
     }
 

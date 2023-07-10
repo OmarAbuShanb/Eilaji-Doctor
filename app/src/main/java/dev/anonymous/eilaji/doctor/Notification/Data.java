@@ -1,60 +1,58 @@
 package dev.anonymous.eilaji.doctor.Notification;
 
 public class Data {
-    private String user;
-    private int icon;
-    private String body;
-    private String title;
-    private String sented;
+    private String userUid;
+    private String fullName;
+    private String message;
+    private String userImageUrl;
+    private String messageImageUrl;
 
-    public Data(String user, int icon, String body, String title, String sented) {
-        this.user = user;
-        this.icon = icon;
-        this.body = body;
-        this.title = title;
-        this.sented = sented;
+    public Data(String userUid, String fullName, String message, String userImageUrl,
+                String messageImageUrl) {
+        this.userUid = userUid;
+        this.fullName = fullName;
+        this.message = message;
+        this.userImageUrl = userImageUrl;
+        this.messageImageUrl = messageImageUrl;
     }
 
-    public Data() {
+    public String getUserUid() {
+        return userUid;
     }
 
-    public String getUser() {
-        return user;
+    public void setUserUid(String userUid) {
+        this.userUid = userUid;
     }
 
-    public void setUser(String user) {
-        this.user = user;
+    public String getFullName() {
+        return fullName;
     }
 
-    public int getIcon() {
-        return icon;
+    public void setFullName(String fullName) {
+        this.fullName = fullName;
     }
 
-    public void setIcon(int icon) {
-        this.icon = icon;
+    public String getMessage() {
+        return message;
     }
 
-    public String getBody() {
-        return body;
+    public void setMessage(String message) {
+        this.message = message;
     }
 
-    public void setBody(String body) {
-        this.body = body;
+    public String getUserImageUrl() {
+        return userImageUrl;
     }
 
-    public String getTitle() {
-        return title;
+    public void setUserImageUrl(String userImageUrl) {
+        this.userImageUrl = userImageUrl;
     }
 
-    public void setTitle(String title) {
-        this.title = title;
+    public String getMessageImageUrl() {
+        return messageImageUrl;
     }
 
-    public String getSented() {
-        return sented;
-    }
-
-    public void setSented(String sented) {
-        this.sented = sented;
+    public void setMessageImageUrl(String messageImageUrl) {
+        this.messageImageUrl = messageImageUrl;
     }
 }

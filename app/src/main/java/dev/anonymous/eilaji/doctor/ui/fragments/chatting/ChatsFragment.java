@@ -13,39 +13,36 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import com.firebase.ui.database.FirebaseRecyclerOptions;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 
-import dev.anonymous.eilaji.doctor.firebase.FirebaseChatController;
-import dev.anonymous.eilaji.doctor.firebase.FirebaseController;
-import dev.anonymous.eilaji.doctor.models.ChatModel;
-import dev.anonymous.eilaji.doctor.utils.constants.Constant;
 import dev.anonymous.eilaji.doctor.adapters.ChatsAdapter;
 import dev.anonymous.eilaji.doctor.databinding.FragmentChatsBinding;
+import dev.anonymous.eilaji.doctor.firebase.FirebaseChatManager;
+import dev.anonymous.eilaji.doctor.firebase.FirebaseController;
+import dev.anonymous.eilaji.doctor.models.ChatModel;
 
 public class ChatsFragment extends Fragment {
     private FragmentChatsBinding binding;
 
-    /*private DatabaseReference reference;*/
-    private DatabaseReference chatListRef;
     private ChatsAdapter chatsAdapter;
     private String userUid;
+
     // Hesham Changes
     private FirebaseUser firebaseUser;
-    private final FirebaseDatabase firebaseDatabase = FirebaseDatabase.getInstance();
     private final FirebaseController firebaseController = FirebaseController.getInstance();
+    private FirebaseChatManager firebaseChatManager;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         firebaseUser = firebaseController.getCurrentUser();
     }
+
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
         binding = FragmentChatsBinding.inflate(getLayoutInflater());
         return binding.getRoot();
     }
-
 
 
     @Override
@@ -66,25 +63,21 @@ public class ChatsFragment extends Fragment {
     private void executeChatDisplay() {
         if (firebaseUser != null) {
             userUid = firebaseUser.getUid();
-//            chatListRef = firebaseDatabase
-//                    .getReference(Constant.CHAT_LIST_DOCUMENT);
 
+            firebaseChatManager = new FirebaseChatManager();
             setupChatsAdapter();
         }
     }
-    private void setupChatsAdapter() {
-        var chatController = FirebaseChatController.getInstance();
 
-        DatabaseReference currentChatRef = chatController.database.getReference(Constant.CHAT_LIST_DOCUMENT)
-                .child(userUid);
+    private void setupChatsAdapter() {
+        DatabaseReference currentChatRef = firebaseChatManager.chatListRef.child(userUid);
         FirebaseRecyclerOptions<ChatModel> options = new FirebaseRecyclerOptions.Builder<ChatModel>()
                 .setQuery(currentChatRef, ChatModel.class)
                 .build();
 
-        var chats_recycler = binding.recyclerChats;
         chatsAdapter = new ChatsAdapter(options, userUid);
-        chats_recycler.setLayoutManager(new LinearLayoutManager(getActivity()));
-        chats_recycler.setAdapter(chatsAdapter);
+        binding.recyclerChats.setLayoutManager(new LinearLayoutManager(getActivity()));
+        binding.recyclerChats.setAdapter(chatsAdapter);
 
         chatsAdapter.startListening();
     }

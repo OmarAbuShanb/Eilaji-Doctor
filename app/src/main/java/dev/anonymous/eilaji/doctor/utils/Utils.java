@@ -36,45 +36,6 @@ public class Utils {
         return instance;
     }
 
-    public interface GetTokenListener {
-        void onGetTokenSuccessfully(String token);
-    }
-
-    public static void getToken(Context context, GetTokenListener listener) {
-        Toast.makeText(context, "جار تحديث ال Token", Toast.LENGTH_SHORT).show();
-        FirebaseMessaging.getInstance()
-                .getToken()
-                .addOnSuccessListener(token -> {
-                    Toast.makeText(context, "تم تحديث ال Token", Toast.LENGTH_SHORT).show();
-                    System.out.println("token = " + token);
-                    SharedPreferences preferences =
-                            context.getSharedPreferences("user_info", MODE_PRIVATE);
-                    preferences.edit().putString("token", token).apply();
-                    listener.onGetTokenSuccessfully(token);
-                })
-                .addOnFailureListener(e ->
-                        Log.e(TAG, "onCreate:getToken: " + e.getMessage()));
-    }
-
-//    public static void saveTokenToUser(Context context, String token, String userUid) {
-//        DatabaseReference reference = FirebaseDatabase.getInstance()
-//                .getReference(Constant.USERS_DOCUMENT);
-//
-//        reference.child(userUid)
-//                .child(Constant.USERS_CHILD_TOKEN)
-//                .setValue(token)
-//                .addOnCompleteListener(command -> {
-//                    if (command.isSuccessful()) {
-//                        Toast.makeText(context, "تم تحديث token بنجاح", Toast.LENGTH_SHORT).show();
-//                    } else {
-//                        Exception exception = command.getException();
-//                        if (exception != null) {
-//                            Log.e(TAG, "saveTokenToUser: " + exception.getMessage());
-//                        }
-//                    }
-//                }).addOnFailureListener(e -> Log.e(TAG, "saveTokenToUser:addOnFailureListener: " + e.getMessage()));
-//    }
-
     public static String formatTimeStamp(Long timeStamp) {
         SimpleDateFormat format = new SimpleDateFormat("hh:mm a", Locale.getDefault());
         return format.format(timeStamp);
