@@ -33,8 +33,6 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
 
 import java.util.HashMap;
 import java.util.Objects;
@@ -47,6 +45,7 @@ import dev.anonymous.eilaji.doctor.ui.activities.BaseActivity;
 import dev.anonymous.eilaji.doctor.utils.AppController;
 import dev.anonymous.eilaji.doctor.utils.Utils;
 import dev.anonymous.eilaji.doctor.utils.constants.Constant;
+import dev.anonymous.eilaji.utils.location.LocationController;
 
 public class RegisterFragment extends Fragment {
     private static final String TAG = "RegisterFragment";
@@ -54,7 +53,7 @@ public class RegisterFragment extends Fragment {
     private Uri pharmacyImageUri;
 
     private FirebaseChatManager firebaseChatManager;
-    private StorageReference messagesImagesRef;
+//    private StorageReference messagesImagesRef;
     private CollectionReference pharmaciesCollection;
 
     private SharedPreferences preferences;
@@ -85,7 +84,7 @@ public class RegisterFragment extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        messagesImagesRef = FirebaseStorage.getInstance().getReference(Constant.PHARMACIES_IMAGES_DOCUMENT);
+//        messagesImagesRef = FirebaseStorage.getInstance().getReference(Constant.PHARMACIES_IMAGES_DOCUMENT);
 
         firebaseChatManager = new FirebaseChatManager();
 
@@ -99,6 +98,13 @@ public class RegisterFragment extends Fragment {
         binding = FragmentRegisterBinding.inflate(inflater, container, false);
 
         // setup the runtime permissions launchers
+        setupPermissionRequestLauncher();
+
+        return binding.getRoot();
+    }
+
+    // this to setup the RL
+    private void setupPermissionRequestLauncher() {
         requestPermissionLauncher = registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), permissions -> {
             // Check if all permissions are granted
             boolean allGranted = true;
@@ -118,8 +124,6 @@ public class RegisterFragment extends Fragment {
                 Toast.makeText(requireContext(), "Permission denied. Cannot create reminder.", Toast.LENGTH_SHORT).show();
             }
         });
-
-        return binding.getRoot();
     }
 
     @Override
@@ -157,22 +161,44 @@ public class RegisterFragment extends Fragment {
     @SuppressLint({"MissingPermission", "SetTextI18n"})
     private void getUserLocationIntoEdLocation() {
         if (arePermissionsGranted()) {
-            fusedLocationClient.getLastLocation().addOnSuccessListener(location -> {
-                if (location != null) {
-                    double latitude = location.getLatitude();
-                    double longitude = location.getLongitude();
+            assert AppController.getInstance() != null;
+            var locationController = new LocationController(AppController.getInstance());
+            var location = locationController.getUserLocationLatLng();
+            if (location != null) {
+                var latitude = location.latitude;
+                var longitude = location.longitude;
+                // Use the latitude and longitude values
+                // TODO These are REAL .....
+                lat = latitude;
+                lng = longitude;
 
-                    // TODO These are REAL .....
-                    lat = latitude;
-                    lng = longitude;
+                LatLng currentLatLng = new LatLng(latitude, longitude);
+                binding.edLocation.setText(currentLatLng.toString());
+                binding.edLocation.setEnabled(false);
 
-                    LatLng currentLatLng = new LatLng(latitude, longitude);
-                    binding.edLocation.setText(currentLatLng.toString());
-                    binding.edLocation.setEnabled(false);
-                } else {
-                    binding.edLocation.setText("Not Found....!");
-                }
-            }).addOnFailureListener(e -> System.out.println("addOnFailureListener " + e.getMessage()));
+                Log.i("MVM", "updateLastLocation: location:" + location + " lat: " + latitude + ", lng: " + longitude);
+
+            } else {
+                // Location retrieval failed
+                fusedLocationClient.getLastLocation()
+                        .addOnSuccessListener(
+                                fusedLocationClientLocation -> {
+                    if (fusedLocationClientLocation != null) {
+                        double latitude = fusedLocationClientLocation.getLatitude();
+                        double longitude = fusedLocationClientLocation.getLongitude();
+
+                        // TODO These are REAL .....
+                        lat = latitude;
+                        lng = longitude;
+
+                        LatLng currentLatLng = new LatLng(latitude, longitude);
+                        binding.edLocation.setText(currentLatLng.toString());
+                        binding.edLocation.setEnabled(false);
+                    } else {
+                        binding.edLocation.setText("Not Found....!");
+                    }
+                }).addOnFailureListener(e -> System.out.println("addOnFailureListener " + e.getMessage()));
+            }
         } else {
             // Handle the case when location permission is not granted
             requestPermissions();
@@ -207,7 +233,7 @@ public class RegisterFragment extends Fragment {
         password = Objects.requireNonNull(binding.edPassword.getText()).toString().trim();
     }
 
-    ActivityResultLauncher<PickVisualMediaRequest> pickMedia = registerForActivityResult(
+    private final ActivityResultLauncher<PickVisualMediaRequest> pickMedia = registerForActivityResult(
             new ActivityResultContracts.PickVisualMedia(), uri -> {
                 if (uri != null) {
                     pharmacyImageUri = uri;
