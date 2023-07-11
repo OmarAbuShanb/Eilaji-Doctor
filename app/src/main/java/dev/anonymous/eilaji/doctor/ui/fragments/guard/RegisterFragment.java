@@ -45,6 +45,7 @@ import dev.anonymous.eilaji.doctor.ui.activities.BaseActivity;
 import dev.anonymous.eilaji.doctor.utils.AppController;
 import dev.anonymous.eilaji.doctor.utils.Utils;
 import dev.anonymous.eilaji.doctor.utils.constants.Constant;
+import dev.anonymous.eilaji.doctor.utils.dialogs.LoadingDialog;
 import dev.anonymous.eilaji.utils.location.LocationController;
 
 public class RegisterFragment extends Fragment {
@@ -80,6 +81,7 @@ public class RegisterFragment extends Fragment {
             Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION
     };
 
+    private final LoadingDialog loadingDialog = new LoadingDialog();
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -243,6 +245,9 @@ public class RegisterFragment extends Fragment {
             });
 
     private void registerPharmacy(String email, String password) {
+        // show loading dialog
+        loadingDialog.show(requireActivity().getSupportFragmentManager(), "Register");
+
         firebaseAuth.createUserWithEmailAndPassword(email, password).addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
                 FirebaseUser firebaseUser = task.getResult().getUser();
@@ -301,6 +306,9 @@ public class RegisterFragment extends Fragment {
                         .apply();
 
                 Toast.makeText(getActivity(), "create pharmacy successful", Toast.LENGTH_SHORT).show();
+
+                // dismiss the dialog
+                loadingDialog.dismiss();
 
                 Intent intent = new Intent(getActivity(), BaseActivity.class);
                 startActivity(intent);

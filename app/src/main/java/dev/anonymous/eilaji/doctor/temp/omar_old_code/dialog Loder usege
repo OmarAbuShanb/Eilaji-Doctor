@@ -1,0 +1,3 @@
+val loadingDialog = LoadingDialog()
+            loadingDialog.show(requireActivity().supportFragmentManager, "")
+//                loadingDialog.dismiss();

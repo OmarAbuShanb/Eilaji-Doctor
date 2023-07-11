@@ -30,6 +30,7 @@ import dev.anonymous.eilaji.doctor.firebase.FirebaseController;
 import dev.anonymous.eilaji.doctor.ui.activities.BaseActivity;
 import dev.anonymous.eilaji.doctor.utils.Utils;
 import dev.anonymous.eilaji.doctor.utils.constants.Constant;
+import dev.anonymous.eilaji.doctor.utils.dialogs.LoadingDialog;
 
 public class LoginFragment extends Fragment {
     private static final String TAG = "LoginFragment";
@@ -42,7 +43,7 @@ public class LoginFragment extends Fragment {
     private final FirebaseController firebaseController = FirebaseController.getInstance();
 
     private NavController navController;
-
+    private final LoadingDialog loadingDialog = new LoadingDialog();
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -97,6 +98,9 @@ public class LoginFragment extends Fragment {
     }
 
     private void signIn(String email, String password) {
+        // show loading dialog
+        loadingDialog.show(requireActivity().getSupportFragmentManager(), "Login");
+
         firebaseController.getAuth()
                 .signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(task -> {
@@ -130,6 +134,8 @@ public class LoginFragment extends Fragment {
                                         .putString("address", address)
                                         .apply();
 
+                                // dismiss the dialog
+                                loadingDialog.dismiss();
                                 moveToBaseActivity();
                             }
                         } else {
