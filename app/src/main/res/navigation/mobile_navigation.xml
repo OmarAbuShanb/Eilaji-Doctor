@@ -21,12 +21,6 @@
         android:label="activity_messaging"
         tools:layout="@layout/activity_messaging" />
 
-    <activity
-        android:id="@+id/navigation_baseActivity"
-        android:name="dev.anonymous.eilaji.doctor.ui.activities.BaseActivity"
-        android:label="activity_base"
-        tools:layout="@layout/activity_base" />
-
     <fragment
     android:id="@+id/navigation_editInformation"
     android:name="dev.anonymous.eilaji.doctor.ui.fragments.EditInformationFragment"

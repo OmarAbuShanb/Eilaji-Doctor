@@ -92,6 +92,8 @@ public class LoginFragment extends Fragment {
         });
 
         binding.buSignUp.setOnClickListener(v -> navController.navigate(R.id.navigation_register));
+
+        binding.buForgotYourPassword.setOnClickListener(view -> navController.navigate(R.id.action_navigation_login_to_navigation_forgotPassword));
     }
 
     private void signIn(String email, String password) {

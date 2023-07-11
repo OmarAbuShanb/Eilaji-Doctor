@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <group
+        android:id="@+id/group1"
+        android:checkableBehavior="single">
+        <item
+            android:id="@+id/navigation_chats"
+            android:icon="@drawable/ic_message"
+            android:title="@string/chats"
+            android:checked="true" />
+        <item
+            android:id="@+id/navigation_editInformation"
+            android:icon="@drawable/ic_description"
+            android:title="@string/edit_information" />
+        <item
+            android:id="@+id/menuItemLogout"
+            android:icon="@drawable/ic_logout"
+            android:title="@string/logout" />
+    </group>
+
+</menu>

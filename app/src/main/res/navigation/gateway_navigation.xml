@@ -9,7 +9,11 @@
         android:id="@+id/navigation_login"
         android:name="dev.anonymous.eilaji.doctor.ui.fragments.guard.LoginFragment"
         android:label="fragment_login"
-        tools:layout="@layout/fragment_login" />
+        tools:layout="@layout/fragment_login" >
+        <action
+            android:id="@+id/action_navigation_login_to_navigation_forgotPassword"
+            app:destination="@id/navigation_forgotPassword" />
+    </fragment>
     <fragment
         android:id="@+id/navigation_register"
         android:name="dev.anonymous.eilaji.doctor.ui.fragments.guard.RegisterFragment"
@@ -18,8 +22,12 @@
 
     <fragment
         android:id="@+id/navigation_forgotPassword"
-        android:name="dev.anonymous.eilaji.doctor.ui.fragments.guard.ForgotPasswordFragment"
+        android:name="dev.anonymous.eilaji.doctor.ui.fragments.guard.password.ForgotPasswordFragment"
         android:label="fragment_forgot_password"
-        tools:layout="@layout/fragment_forgot_password" />
+        tools:layout="@layout/fragment_forgot_password" >
+        <action
+            android:id="@+id/action_navigation_forgotPassword_to_navigation_login"
+            app:destination="@id/navigation_login" />
+    </fragment>
 
 </navigation>
